@@ -2,15 +2,25 @@
 
 ;        esp -> [ret]  ; ret - adres powrotu do asmloader
 
+licznik   equ 1
+mianownik equ 17
+n         equ 15
+
+         push n          ; n -> stack
+         push mianownik  ; mianownik -> stack
+         push licznik    ; licznik -> stack
+
+;        esp -> [licznik][mianownik][n][ret]
+
          call getaddr  ; push on the stack the run-time address of format and jump to getaddr
 format:
-         db "Hello World!", 0xA, 0
+         db "licznik=%d, mianownik=d, n=%d", 0xA, 0
 getaddr:
          
-;        esp -> [format][ret]
+;        esp -> [format][licznik][mianownik][n][ret]
 
-         call [ebx+3*4]  ; printf(format);
-         add esp, 4      ; esp = esp + 4
+         call [ebx+3*4]  ; printf(format, licznik, mianownik, n);
+         add esp, 4*4    ; esp = esp + 4
 
 ;        esp -> [ret]
 
