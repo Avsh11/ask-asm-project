@@ -6,21 +6,28 @@ licznik   equ 1
 mianownik equ 17
 n         equ 15
 
-         push n          ; n -> stack
          push mianownik  ; mianownik -> stack
          push licznik    ; licznik -> stack
 
 ;        esp -> [licznik][mianownik][n][ret]
 
-         call getaddr  ; push on the stack the run-time address of format and jump to getaddr
-format:
-         db "licznik=%d, mianownik=d, n=%d", 0xA, 0
-getaddr:
+         call getaddr_x  ; push on the stack the run-time address of format and jump to getaddr
+format_x:
+         db "x = %d/%d", 0xA, 0
+getaddr_x:
+
+         call [ebx+3*4]
+         add esp, 3*4
          
-;        esp -> [format][licznik][mianownik][n][ret]
+         push n
+         
+         call getaddr_n
+format_n:
+         db "n = %d", 0xA, 0
+getaddr_n:
 
          call [ebx+3*4]  ; printf(format, licznik, mianownik, n);
-         add esp, 4*4    ; esp = esp + 4
+         add esp, 2*4    ; esp = esp + 8
 
 ;        esp -> [ret]
 
