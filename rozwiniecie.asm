@@ -31,7 +31,6 @@ max_digit equ 63  ; ile cyfr maksymalnie po przecinku (nie rozmiar bufora)
 ;        [ebp+12] = abs_p  ; wartosc bezwzgledna licznika bedzie
 ;        esp -> [licznik][mianownik][n][abs_p][ret]
 
-
 ;        ODCZYT LICZNIKA
 
          call getaddr_pl  ; pl = prompt licznik
@@ -137,6 +136,7 @@ getaddr_sn:
          push dword [ebp+0]  ; licznik -> stack
 
 ;        esp -> [licznik][mianownik][licznik][mianownik][n][abs_p][ret]
+;        dwa liczniki ale rozne adresy stad dwa razy licznik!!!
 
          call getaddr_x
 format_x:
@@ -150,7 +150,6 @@ getaddr_x:
          add esp, 3*4    ; esp = esp + 12
 
 ;        esp -> [licznik][mianownik][n][abs_p][ret]
-
 
 ;        N = N (wpisanie do n wczytanego n)
 
