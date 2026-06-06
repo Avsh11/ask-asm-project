@@ -9,7 +9,7 @@ x = 0.058823529411765(4)
 
 ### Kompilacja wersji asmloader .asm 
 
-![image](assets/test.png)
+![image](assets/asm.png)
 
 ### Kompilacja wersji w języku programowania C
 
