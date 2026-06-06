@@ -13,4 +13,6 @@ x = 0.058823529411765(4)
 
 ### Kompilacja wersji w języku programowania C
 
+![image](assets/c.png)
+
 ### Kompilacja wersji wykonywalnej .exe
