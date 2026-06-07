@@ -31,74 +31,61 @@ max_digit equ 63  ; ile cyfr maksymalnie po przecinku (nie rozmiar bufora)
 ;        [ebp+12] = abs_p  ; wartosc bezwzgledna licznika bedzie
 ;        esp -> [licznik][mianownik][n][abs_p][ret]
 
-;        ODCZYT LICZNIKA
+;        ODCZYT X (ulamek licznik/mianownik)
 
-         call getaddr_pl  ; pl = prompt licznik
-format_pl:
-         db "licznik = ", 0
-getaddr_pl:
+poczatek:
+         call getaddr_px
+format_px:
+         db "x = ", 0
+getaddr_px:
 
-;        esp -> [format_pl][licznik][mianownik][n][abs_p][ret]
+;        esp -> [format_px][licznik][mianownik][n][abs_p][ret]
 
-         call [ebx+3*4]  ; printf(format_pl)
+         call [ebx+3*4]  ; printf(format_px);
 
 ;        esp -> [licznik][mianownik][n][abs_p][ret]
+
+         lea eax, [ebp+4]  ; eax = adres mianownika (&mianownik)
+         push eax          ; eax -> stack
+
+;        esp -> [addr_mianownik][licznik][mianownik][n][abs_p][ret]
 
          lea eax, [ebp+0]  ; eax = adres licznika (&licznik)  ; ladujemy adres zmiennej nie wartosc
          push eax          ; eax -> stack
 
-;        esp -> [addr_licznik][licznik][mianownik][n][abs_p][ret]
+;        esp -> [addr_licznik][addr_mianownik][licznik][mianownik][n][abs_p][ret]
 
-         call getaddr_sl  ; scanf licznik
-format_sl:
-         db "%d", 0
-getaddr_sl:
+         call getaddr_sx
+format_sx:
+         db "%d/%d", 0
+getaddr_sx:
 
-;        esp -> [format_sl][addr_licznik][licznik][mianownik][n][abs_p][ret]
+;        esp -> [format_sx][addr_licznik][addr_mianownik][licznik][mianownik][n][abs_p][ret]
 
-         call [ebx+4*4]  ; scanf(format_sl, &licznik);
-         add esp, 2*4    ; esp = esp + 8
+         call [ebx+4*4]  ; scanf(format_sx, &licznik, &mianownik);
+         add esp, 3*4    ; esp = esp + 12
         
 ;        esp -> [licznik][mianownik][n][abs_p][ret]
 
-         cmp eax, 1  ; eax - 1
-         jne blad_danych
+         cmp eax, 2  ; eax - 2
+         jne blad_danych_l
 
-;        ODCZYT MIANOWNIKA
+         call [ebx+2*4]  ; getchar();
+         cmp eax, 10     ; eax - 10 (\n)
+         je sprawdz_zero
+         cmp eax, -1     ; eax - (-1) (EOF)
+         je sprawdz_zero
+         jmp blad_danych_l
 
-         call getaddr_pm  ; prompt mianownik
-format_pm:
-         db "mianownik = ", 0
-getaddr_pm:
+;        MIANOWNIK != 0
 
-;        esp -> [format_pm][licznik][mianownik][n][abs_p][ret]
-
-         call [ebx+3*4]  ; printf(format_pm);
-
-;        esp -> [licznik][mianownik][n][abs_p][ret]
-
-         lea eax, [ebp+4]  ; eax = adres mianownika teraz, zajrzec do sciagi!!!
-         push eax          ; eax -> stack
-
-;        esp -> [addr_mianownik][licznik][mianownik][n][abs_p][ret]
-        
-         call getaddr_sm  ; scanf mianownik
-format_sm:
-         db "%d", 0
-getaddr_sm:
-
-;        esp -> [format_sm][addr_mianownik][licznik][mianownik][n][abs_p][ret]
-
-         call [ebx+4*4]  ; scanf(format_sm, %mianownik);
-         add esp, 2*4    ; esp = esp + 8
-        
-;        esp -> [licznik][mianownik][n][abs_p][ret]
-
-         cmp eax, 1  ; eax - 1
-         jne blad_danych
+sprawdz_zero:
+         cmp dword [ebp+4], 0  ; mianownik - 0
+         je blad_zero          ; jump if equal  ; mianwnik == 0 -> blad
         
 ;        ODCZYT N
 
+poczatek_n:
          call getaddr_pn  ; prompt n
 format_pn:
          db "n = ", 0
@@ -128,51 +115,7 @@ getaddr_sn:
 ;        esp -> [licznik][mianownik][n][abs_p][ret]
 
          cmp eax, 1  ; eax - 1
-         jne blad_danych
-
-;        ZBICIE: X = L / M 
-
-         push dword [ebp+4]  ; mianownik -> stack
-         push dword [ebp+0]  ; licznik -> stack
-
-;        esp -> [licznik][mianownik][licznik][mianownik][n][abs_p][ret]
-;        dwa liczniki ale rozne adresy stad dwa razy licznik!!!
-
-         call getaddr_x
-format_x:
-         db "x = %d/%d", 0xA, 0
-getaddr_x:
-
-;        esp -> [format_x][licznik][mianownik][licznik][mianownik][n][abs_p][ret]
-;        dwa liczniki ale rozne adresy stad dwa razy licznik
-
-         call [ebx+3*4]  ; printf(format_x, licznik, mianownik);
-         add esp, 3*4    ; esp = esp + 12
-
-;        esp -> [licznik][mianownik][n][abs_p][ret]
-
-;        N = N (wpisanie do n wczytanego n)
-
-         push dword [ebp+8]  ; n-> stack
-         
-;        esp -> [n_wartosc][licznik][mianownik][n][abs_p][ret]
-
-         call getaddr_n
-format_n:
-         db "n = %d", 0xA, 0
-getaddr_n:
-
-;        esp -> [format_n][n][licznik][mianownik][n][abs_p][ret]
-
-         call [ebx+3*4]  ; printf(format_n, n);
-         add esp, 2*4    ; esp = esp + 8
-      
-;        esp -> [licznik][mianownik][n][abs_p][ret]
-
-;        MIANOWNIK != 0
-
-         cmp dword [ebp+4], 0  ; mianownik - 0
-         je blad_zero          ; jump if equal  ; mianwnik == 0 -> blad
+         jne blad_danych_n
          
 ;        0 <= n <=m max_digit
 
@@ -359,7 +302,7 @@ cyfra_petla:
 
          call getaddr_wynik
 format_wynik:
-         db "x = %s", 0xA, 0
+         db 0xA, "x = %s", 0xA, 0
 getaddr_wynik:
 
 ;        esp -> [format_wynik][bufor][getaddr_buf][licznik][mianownik][n][abs_p][ret]
@@ -378,43 +321,64 @@ getaddr_wynik:
 ;        OBSLUGI BLEDOW !!!!
 
 ;        scanf nie wczytal liczby np litera lub inny smiec
+blad_danych_l:
+         mov dword [ebp+12], 0
+         jmp blad_danych
+
+blad_danych_n:
+         mov dword [ebp+12], 1
+         jmp blad_danych
+
 blad_danych:
          call getaddr_bd
 ;        tekst komunikatu o blednym scanfie
 msg_danych:
-         db "Blad: oczekiwano liczby calkowitej (wpisales litere lub cos innego)", 0xA, 0
+         db 0xA, "Blad: oczekiwano liczby calkowitej (wpisales litere lub cos innego)", 0xA, 0
 getaddr_bd:
 
 ;        esp -> [msg_danych][licznik][mianownik][n][abs_p][ret]
 
          call [ebx+3*4]  ; printf(msg_danych);
          add esp, 1*4    ; esp = esp + 4
-         jmp koniec_blad
+
+flush_bd:
+         call [ebx+2*4]
+         cmp eax, 10
+         je retry_bd
+         cmp eax, -1
+         je retry_bd
+         jmp flush_bd
+
+retry_bd:
+         cmp dword [ebp+12], 0
+         je poczatek
+         jmp poczatek_n
 
 ;        jak mianownik = 0 to wypisz komunikat i koncz program!!
 blad_zero:
          call getaddr_bz
 msg_zero:
-         db "Blad mianownik rowny zero", 0xA, 0
+         db 0xA, "Blad mianownik rowny zero", 0xA, 0
 getaddr_bz:
 
 ;        esp -> [msg_zero][licznik][mianownik][n][abs_p][ret]
 
          call [ebx+3*4]   ; printf(msg_zero);
          add esp, 1*4     ; esp = esp + 4
-         jmp koniec_blad  ; koniec_blad konczy program
+         jmp poczatek  ; koniec_blad konczy program
 
 ;        n poza zakresem 0-63, komunikat i koniec programu
 blad_n:
          call getaddr_bn
 msg_n:
-         db "Blad: n musi byc z przezialy 0-63", 0xA, 0
+         db 0xA, "Blad: n musi byc z przezialy 0-63", 0xA, 0
 getaddr_bn:
       
 ;        esp -> [msg_n][licznik][mianownik][n][abs_p][ret]
 
          call [ebx+3*4]  ; printf(msg_n);
          add esp, 4      ; esp = esp + 4
+         jmp poczatek_n
 
 ;        wspolne zakonczenie po bledzie zwalnamy caly stos i exit(0) pierwsza funkcja w API asmloadera 0. exit
 koniec_blad:
@@ -441,7 +405,7 @@ koniec_blad:
 ; 3 - printf
 ; 4 - scanf
 ;
-; To co funkcja zwróci jest w EAX.
+; To co funkcja zwr?ci jest w EAX.
 ; Po wywolaniu funkcji sciagamy argumenty ze stosu.
 ;
 ; https://gynvael.coldwind.pl/?id=387
