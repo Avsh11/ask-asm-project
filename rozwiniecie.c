@@ -1,28 +1,40 @@
+/*
+Ten sam algorytm co rozwiniecie.asm; wynik wypisujemy printfem (bez recznego bufora).
+Warunki brzegowe (jak w asm):
+litera / zly scanf  -> komunikat, ponowienie odczytu
+mianownik = 0       -> komunikat, ponowienie odczytu x
+n < 1 lub n > MAX_N (63) -> komunikat, ponowienie odczytu n
+ujemny licznik lub mianownik -> znak '-' (XOR), obliczenia na modulach
+Przyklad: x = 1/17, n = 15 -> x = 0.058823529411765
+ */
+
 #include <stdio.h>
 
 #define MAX_N 63
 
+// flush_linia nam wyrzuca reszte linii ze stdin po blednym scanf */
 static void flush_linia(void)
 {
     int c;
 
-    while ((c = getchar()) != '\n' && c != EOF)
+    while ((c = getchar()) != '\n' && c != EOF)  //EOF = koniec wejscia (-1)
         ;
 }
 
+// wczytaj_ulamek - "x = " + scanf "%d/%d"; 1 = OK, 0 = blad danych
 static int wczytaj_ulamek(int *licznik, int *mianownik)
 {
     int c;
 
     printf("x = ");
-    if (scanf("%d/%d", licznik, mianownik) != 2) {
+    if (scanf("%d/%d", licznik, mianownik) != 2) {  // musza byc 2 liczby i '/'
         printf("\nBlad: oczekiwano liczby calkowitej (wpisales litere lub cos innego)\n");
         flush_linia();
         return 0;
     }
 
     c = getchar();
-    if (c != '\n' && c != EOF) {
+    if (c != '\n' && c != EOF) {  // np "1/3abc" cos zostalo po ulamku np litera
         printf("\nBlad: oczekiwano liczby calkowitej (wpisales litere lub cos innego)\n");
         flush_linia();
         return 0;
@@ -31,8 +43,11 @@ static int wczytaj_ulamek(int *licznik, int *mianownik)
     return 1;
 }
 
+// wczytaj_n - "n = " + scanf "%d"; 1 = OK, 0 = blad danych 
 static int wczytaj_n(int *n)
 {
+    int c;
+
     printf("n = ");
     if (scanf("%d", n) != 1) {
         printf("\nBlad: oczekiwano liczby calkowitej (wpisales litere lub cos innego)\n");
@@ -40,9 +55,17 @@ static int wczytaj_n(int *n)
         return 0;
     }
 
+    c = getchar();
+    if (c != '\n' && c != EOF) {  // np. "2b" - scanf wczytal 2, litera zostala 
+        printf("\nBlad: oczekiwano liczby calkowitej (wpisales litere lub cos innego)\n");
+        flush_linia();
+        return 0;
+    }
+
     return 1;
 }
 
+// wartosc_bezwzgledna |x| dla int (long long przy INT_MIN) 
 static unsigned wartosc_bezwzgledna(int x)
 {
     if (x < 0)
@@ -53,7 +76,7 @@ static unsigned wartosc_bezwzgledna(int x)
 int main(void)
 {
     int licznik, mianownik, n;
-    unsigned modul_p, modul_q;
+    unsigned modul_l, modul_m;
     unsigned czesc, reszta;
     int i;
 
@@ -77,21 +100,22 @@ int main(void)
         break;
     }
 
-    modul_p = wartosc_bezwzgledna(licznik);
-    modul_q = wartosc_bezwzgledna(mianownik);
+    modul_l = wartosc_bezwzgledna(licznik);
+    modul_m = wartosc_bezwzgledna(mianownik);
 
-    czesc = modul_p / modul_q;
-    reszta = modul_p % modul_q;
+    czesc = modul_l / modul_m;
+    reszta = modul_l % modul_m;
 
+    // wypis wyniku opcjonalny '-', czesc calkowita, '.', n cyfr po przecinku 
     printf("\nx = ");
-    if ((licznik < 0) ^ (mianownik < 0))
+    if ((licznik < 0) ^ (mianownik < 0))  // XOR minus gdy tylko jeden ujemny
         putchar('-');
     printf("%u.", czesc);
 
     for (i = 0; i < n; i++) {
         reszta *= 10;
-        printf("%u", reszta / modul_q);
-        reszta %= modul_q;
+        printf("%u", reszta / modul_m);
+        reszta %= modul_m;
     }
     putchar('\n');
 
