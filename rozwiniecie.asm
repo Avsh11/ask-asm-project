@@ -117,10 +117,10 @@ getaddr_sn:
          cmp eax, 1  ; eax - 1
          jne blad_danych_n
          
-;        0 <= n <=m max_digit
+;        1 <= n <= max_digit
 
-         cmp dword [ebp+8], 0  ; n - 0
-         jl blad_n             ; jump if less  ; n < 0 -> blad
+         cmp dword [ebp+8], 1  ; n - 1
+         jl blad_n             ; jump if less  ; n < 1 -> blad
 
          cmp dword [ebp+8], max_digit  ; n - max_digit
          jg blad_n                     ; n > 63 -> blad
@@ -367,11 +367,11 @@ getaddr_bz:
          add esp, 1*4    ; esp = esp + 4
          jmp poczatek    ; koniec_blad konczy program
 
-;        n poza zakresem 0-63, komunikat i koniec programu
+;        n poza zakresem 1-63, komunikat i ponowienie odczytu n
 blad_n:
          call getaddr_bn
 msg_n:
-         db 0xA, "Blad: n musi byc z przezialy 0-63", 0xA, 0
+         db 0xA, "Blad: n musi byc z przedzialu 1-63", 0xA, 0
 getaddr_bn:
       
 ;        esp -> [msg_n][licznik][mianownik][n][abs_p][ret]
@@ -405,7 +405,7 @@ koniec_blad:
 ; 3 - printf
 ; 4 - scanf
 ;
-; To co funkcja zwróci jest w EAX.
+; To co funkcja zwr?ci jest w EAX.
 ; Po wywolaniu funkcji sciagamy argumenty ze stosu.
 ;
 ; https://gynvael.coldwind.pl/?id=387

@@ -70,8 +70,8 @@ int main(void)
     while (1) {
         if (!wczytaj_n(&n))
             continue;
-        if (n < 0 || n > MAX_N) {
-            printf("\nBlad: n musi byc z przedzialy 0-63\n");
+        if (n < 1 || n > MAX_N) {
+            printf("\nBlad: n musi byc z przedzialu 1-63\n");
             continue;
         }
         break;
