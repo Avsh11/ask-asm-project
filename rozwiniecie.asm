@@ -322,11 +322,11 @@ getaddr_wynik:
 
 ;        scanf nie wczytal liczby np litera lub inny smiec
 blad_danych_l:
-         mov dword [ebp+12], 0
+         mov dword [ebp+12], 0  ; *(int*)(ebp+12) = 0  ; 0 = ponow od "x = "
          jmp blad_danych
 
 blad_danych_n:
-         mov dword [ebp+12], 1
+         mov dword [ebp+12], 1  ; *(*int)(ebp+12) = 1  ; 1 = ponow od "n = "
          jmp blad_danych
 
 blad_danych:
@@ -342,17 +342,17 @@ getaddr_bd:
          add esp, 1*4    ; esp = esp + 4
 
 flush_bd:
-         call [ebx+2*4]
-         cmp eax, 10
-         je retry_bd
-         cmp eax, -1
-         je retry_bd
-         jmp flush_bd
+         call [ebx+2*4]  ; eax = getchar();
+         cmp eax, 10     ; eax - 10 (\n)
+         je retry_bd     ; jump if equal  ; jump if ZF = 1  ; koniec linii
+         cmp eax, -1     ; eax - (-1) (EOF)
+         je retry_bd     ; jump if equal  ; jump if ZF = 1  ; koniec wejscia
+         jmp flush_bd    ; zjadamy znaki az \n lub EOF
 
 retry_bd:
-         cmp dword [ebp+12], 0
-         je poczatek
-         jmp poczatek_n
+         cmp dword [ebp+12], 0  ; *(*int*)(ebp+12) - 0
+         je poczatek            ; jump if equal  ; jump if ZF = 1  ; zly x wtedy -> "x = "
+         jmp poczatek_n         ; zly n -> "n = "
 
 ;        jak mianownik = 0 to wypisz komunikat i koncz program!!
 blad_zero:
@@ -363,9 +363,9 @@ getaddr_bz:
 
 ;        esp -> [msg_zero][licznik][mianownik][n][abs_p][ret]
 
-         call [ebx+3*4]   ; printf(msg_zero);
-         add esp, 1*4     ; esp = esp + 4
-         jmp poczatek  ; koniec_blad konczy program
+         call [ebx+3*4]  ; printf(msg_zero);
+         add esp, 1*4    ; esp = esp + 4
+         jmp poczatek    ; koniec_blad konczy program
 
 ;        n poza zakresem 0-63, komunikat i koniec programu
 blad_n:
@@ -405,7 +405,7 @@ koniec_blad:
 ; 3 - printf
 ; 4 - scanf
 ;
-; To co funkcja zwr?ci jest w EAX.
+; To co funkcja zwróci jest w EAX.
 ; Po wywolaniu funkcji sciagamy argumenty ze stosu.
 ;
 ; https://gynvael.coldwind.pl/?id=387
