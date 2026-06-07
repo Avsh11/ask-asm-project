@@ -68,20 +68,20 @@ getaddr_sx:
 ;        esp -> [licznik][mianownik][n][abs_p][ret]
 
          cmp eax, 2  ; eax - 2
-         jne blad_danych_l
+         jne blad_danych_l  ; jump if not equal  ; jump if ZF = 0
 
-         call [ebx+2*4]  ; getchar();
+         call [ebx+2*4]  ; eax = getchar();
          cmp eax, 10     ; eax - 10 (\n)
-         je sprawdz_zero
+         je sprawdz_zero  ; jump if equal  ; jump if ZF = 1
          cmp eax, -1     ; eax - (-1) (EOF)
-         je sprawdz_zero
+         je sprawdz_zero  ; jump if equal  ; jump if ZF = 1
          jmp blad_danych_l
 
 ;        MIANOWNIK != 0
 
 sprawdz_zero:
-         cmp dword [ebp+4], 0  ; mianownik - 0
-         je blad_zero          ; jump if equal  ; mianwnik == 0 -> blad
+         cmp dword [ebp+4], 0  ; *(int*)(ebp+4) - 0  ; mianownik - 0
+         je blad_zero          ; jump if equal  ; jump if ZF = 1  ; mianownik == 0 -> blad
         
 ;        ODCZYT N
 
@@ -115,31 +115,31 @@ getaddr_sn:
 ;        esp -> [licznik][mianownik][n][abs_p][ret]
 
          cmp eax, 1  ; eax - 1
-         jne blad_danych_n
+         jne blad_danych_n  ; jump if not equal  ; jump if ZF = 0
          
 ;        1 <= n <= max_digit
 
-         cmp dword [ebp+8], 1  ; n - 1
-         jl blad_n             ; jump if less  ; n < 1 -> blad
+         cmp dword [ebp+8], 1  ; *(int*)(ebp+8) - 1  ; n - 1
+         jl blad_n             ; jump if less  ; jump if SF != OF  ; n < 1 -> blad
 
-         cmp dword [ebp+8], max_digit  ; n - max_digit
-         jg blad_n                     ; n > 63 -> blad
+         cmp dword [ebp+8], max_digit  ; *(int*)(ebp+8) - max_digit
+         jg blad_n                     ; jump if greater  ; jump if SF != OF  ; n > 63 -> blad
          
 ;        UJEMNY ZNAK DLA MIANOWNIKA LUB LICZNIKA
 
          xor ecx, ecx  ; ecx = 0
 
-         mov eax, [ebp+0]  ; eax = licznik
+         mov eax, [ebp+0]  ; eax = *(int*)(ebp+0) = licznik
          test eax, eax     ; eax & eax  ; OF=0 SF ZF PF CF=0 affected
-         jns zn_p          ; jump if not sign  ; licznik >= 0 -> bez zmiany ecx
+         jns zn_p          ; jump if not sign  ; jump if SF = 0  ; licznik >= 0 -> bez zmiany ecx
 
          xor ecx, 1  ; licznik < 0 (bit znaku przelaczyc 0->1)
 
 ;        licznik sprawdzony i lecimy do mianownika
 zn_p:
-         mov eax, [ebp+4]  ; eax = mianownik
+         mov eax, [ebp+4]  ; eax = *(int*)(ebp+4) = mianownik
          test eax, eax     ; eax & eax  ; OF=0 SF ZF PF CF=0 affected
-         jns zn_q          ; mianownik >= 0 -> bez zmoany ecx
+         jns zn_q          ; jump if not sign  ; jump if SF = 0  ; mianownik >= 0 -> bez zmoany ecx
 
          xor ecx, 1  ; gdy mianownik < 0 -> przelacz bit (oba ujemne = wynik dodatni dwa minusy -> +)
 
@@ -153,19 +153,19 @@ zn_q:
 ;        gdzie |l| wartosc bezwz. licznik i |m| mianownik
 ;        bede uzywac naprzemiennie w komentarzach |licznik|/|mianownik| zeby bylo wiadomo
 
-         mov eax, [ebp+0]  ; eax = licznik
+         mov eax, [ebp+0]  ; eax = *(int*)(ebp+0) = licznik
          test eax, eax     ; eax & eax  ; OF=0 SF ZF PF CF=0 affected
-         jns p_abs         ; jump if not sign  ; liczik >= 0 -> juz |l|
+         jns p_abs         ; jump if not sign  ; jump if SF = 0  ; licznik >= 0 -> juz |l|
 
          neg eax  ; licznik < 0 -> eax = -eax = |licznik| = |l|
 
 ;        licznik nieujemny to zapisujemy |licznik| do abs_p
 p_abs:
-         mov [ebp+12], eax  ; abs_p = |licznik|
+         mov [ebp+12], eax  ; *(int*)(ebp+12) = eax  ; abs_p = |licznik|
 
-         mov eax, [ebp+4]  ; eax = mianownik
+         mov eax, [ebp+4]  ; eax = *(int*)(ebp+4) = mianownik
          test eax, eax     ; eax & eax  ; OF=0 SF ZF PF CF=0 affected
-         jns q_abs         ; jump if not sign  ; mianownik >= 0
+         jns q_abs         ; jump if not sign  ; jump if SF = 0  ; mianownik >= 0
 
          neg eax  ; mianownik < 0 -> |mianownik|
 
@@ -186,23 +186,23 @@ getaddr_buf:
        
 ;        esp -> [getaddr_buf][licznik][mianownik][n][abs_p][ret]
 
-         mov eax, [esp]                ; eax = [esp]
+         mov eax, [esp]                ; eax = *(int*)esp
          sub eax, getaddr_buf - bufor  ; eax = adres bufora
 
          mov edi, eax  ; edi = wskaznik zapisu
 
          cmp ecx, 0     ; ecx - 0
-         je bez_minusa  ; jump if equal  ; wynik dodatni
+         je bez_minusa  ; jump if equal  ; jump if ZF = 1  ; wynik dodatni
 
 ;        znak '-' (ecx z XOR gdzie 0 = dodatni, 1 = ujemny)
 
-         mov byte [edi], '-'
+         mov byte [edi], '-'  ; *(char*)edi = '-'
          inc edi  ; edi = edi + 1
  
 ;        wynik dodatni, pomijamy zapis '-' i idziemy do div od razu
 bez_minusa:
 
-         mov eax, [ebp+12]  ; eax = abs_p (|licznik|)
+         mov eax, [ebp+12]  ; eax = *(int*)(ebp+12) = abs_p (|licznik|)
          mov edx, 0         ; edx = 0
 
          div esi  ; eax = eax/esi  ; iloraz
@@ -213,7 +213,7 @@ bez_minusa:
 ;        esp -> [reszta][getaddr_buf][licznik][mianownik][n][abs_p][ret]
 
          cmp eax, 0     ; eax - 0
-         je czesc_zero  ; jump if equal  ; czesc calkowita = 0
+         je czesc_zero  ; jump if equal  ; jump if ZF = 1  ; czesc calkowita = 0
          
          push esi  ; esi -> stack
          
@@ -225,7 +225,7 @@ bez_minusa:
 czesc_push:
 
          cmp eax, 0    ; eax - 0
-         je czesc_pop  ; jump if equal  ; eax == 0
+         je czesc_pop  ; jump if equal  ; jump if ZF = 1  ; eax == 0
 
          mov edx, 0   ; edx = 0
          mov ecx, 10  ; ecx = 10
@@ -233,7 +233,7 @@ czesc_push:
          div ecx  ; eax = eax/10  ; iloraz
                   ; edx = eax%10  ; ostatnia cyfra 0-9
 
-         add dl, '0'  ; dl = cyfra jako ascii
+         add dl, '0'  ; dl = dl + 48  ; dl = cyfra jako ascii
          push edx     ; edx -> stack (cyfra)
 
          jmp czesc_push
@@ -245,7 +245,7 @@ czesc_pop:
          je po_czesci  ; jump if equal  ; jump if ZF = 1
          
          pop eax        ; eax <- stack
-         mov [edi], al  ; al  ; *(*char)edi = al
+         mov [edi], al  ; *(char*)edi = al
          inc edi        ; edi++
 
          jmp czesc_pop
@@ -269,7 +269,7 @@ po_czesci:
          
          pop eax  ; eax <- stack  ; eax = reszta
 
-         mov ecx, [ebp+8]  ; ecx = n
+         mov ecx, [ebp+8]  ; ecx = *(int*)(ebp+8) = n
 
 ;        n razy reszta * 10, div przez |m| i zpais jednej cyfry po przecinku
 cyfra_petla:
@@ -279,9 +279,9 @@ cyfra_petla:
          add eax, eax            ; eax = eax + eax  ; eax = reszta * 10
 
          div esi  ; eax = edx:eax / esi  ; cyfra
-                  ; edx = eddx:eax % esi ; reszta
+                  ; edx = edx:eax % esi  ; reszta
 
-         add al, '0'    ; al = al + '0'
+         add al, '0'    ; al = al + 48 (ASCII 48 co nie)
          mov [edi], al  ; *(char*)edi = al
          inc edi        ; edi++
 
@@ -326,7 +326,7 @@ blad_danych_l:
          jmp blad_danych
 
 blad_danych_n:
-         mov dword [ebp+12], 1  ; *(*int)(ebp+12) = 1  ; 1 = ponow od "n = "
+         mov dword [ebp+12], 1  ; *(int*)(ebp+12) = 1  ; 1 = ponow od "n = "
          jmp blad_danych
 
 blad_danych:
@@ -350,7 +350,7 @@ flush_bd:
          jmp flush_bd    ; zjadamy znaki az \n lub EOF
 
 retry_bd:
-         cmp dword [ebp+12], 0  ; *(*int*)(ebp+12) - 0
+         cmp dword [ebp+12], 0  ; *(int*)(ebp+12) - 0
          je poczatek            ; jump if equal  ; jump if ZF = 1  ; zly x wtedy -> "x = "
          jmp poczatek_n         ; zly n -> "n = "
 
@@ -405,7 +405,7 @@ koniec_blad:
 ; 3 - printf
 ; 4 - scanf
 ;
-; To co funkcja zwr?ci jest w EAX.
+; To co funkcja zwróci jest w EAX.
 ; Po wywolaniu funkcji sciagamy argumenty ze stosu.
 ;
 ; https://gynvael.coldwind.pl/?id=387
