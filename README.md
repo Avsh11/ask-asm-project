@@ -15,7 +15,7 @@ x = 0.058823529411765(4)
 
 ![image](assets/ccomp.png)
 
-### Kompilacja wersji wykonywalnej .exe
+### Kompilacja wersji wykonywalnej
 
 ![image](assets/exe.png)
 
